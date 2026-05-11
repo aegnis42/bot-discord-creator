@@ -12,6 +12,7 @@ Variables d'environnement requises :
 """
 
 import os
+import asyncio
 import discord
 from discord import app_commands
 from discord.ext import commands
@@ -880,7 +881,16 @@ def _build_overwrites(guild, roles_dict, allowed_role_names, mode=None):
 # ════════════════════════════════════════════════════════════════════
 async def _create_roles(guild: discord.Guild, log: list) -> dict:
     created = {}
+    # Index des rôles existants par nom pour éviter les doublons
+    existing = {r.name: r for r in guild.roles}
+    skipped = 0
+    new_count = 0
     for name, color, perms_dict, is_sep, hoist in ROLES:
+        # Si le rôle existe déjà, on le réutilise
+        if name in existing:
+            created[name] = existing[name]
+            skipped += 1
+            continue
         try:
             role = await guild.create_role(
                 name=name,
@@ -891,10 +901,37 @@ async def _create_roles(guild: discord.Guild, log: list) -> dict:
                 reason="Auto via /create",
             )
             created[name] = role
+            new_count += 1
             tag = "📌" if hoist else ("➖" if is_sep else "  ")
             log.append(f"{tag} {name}")
+            # Pause anti rate-limit (Discord limite à ~50 créations/10min)
+            await asyncio.sleep(0.5)
+        except discord.HTTPException as e:
+            if e.status == 429:  # Rate limited
+                retry_after = getattr(e, "retry_after", 60)
+                log.append(f"⏸️ Rate limit atteint, pause {retry_after:.0f}s...")
+                await asyncio.sleep(retry_after + 1)
+                # On réessaye
+                try:
+                    role = await guild.create_role(
+                        name=name, color=discord.Color(color),
+                        permissions=_perms_from_dict(perms_dict),
+                        hoist=hoist, mentionable=not is_sep,
+                        reason="Auto via /create (retry)",
+                    )
+                    created[name] = role
+                    new_count += 1
+                    log.append(f"✓ {name} (après pause)")
+                except Exception as e2:
+                    log.append(f"✗ Rôle '{name}' (retry) : {e2}")
+            else:
+                log.append(f"✗ Rôle '{name}' : {e}")
         except Exception as e:
             log.append(f"✗ Rôle '{name}' : {e}")
+    if skipped:
+        log.append(f"ℹ️ {skipped} rôle(s) déjà existant(s), réutilisé(s).")
+    if new_count:
+        log.append(f"➕ {new_count} nouveau(x) rôle(s) créé(s).")
     return created
 
 
@@ -903,13 +940,27 @@ async def _create_roles(guild: discord.Guild, log: list) -> dict:
 # ════════════════════════════════════════════════════════════════════
 async def _create_channels(guild: discord.Guild, roles: dict, log: list) -> dict:
     created = {}
+    # Indexes des catégories et salons existants par nom
+    existing_cats = {c.name: c for c in guild.categories}
+    existing_chans = {c.name: c for c in guild.channels if c.category is not None}
+    skipped_cats = 0
+    skipped_chans = 0
+
     for cat_def in CATEGORIES:
         try:
-            cat_ow = {}
-            if cat_def["private_for"]:
-                cat_ow = _build_overwrites(guild, roles, cat_def["private_for"])
-            category = await guild.create_category(cat_def["name"], overwrites=cat_ow)
-            log.append(f"📁 {cat_def['name']}")
+            cat_name = cat_def["name"]
+            # Si la catégorie existe déjà, on la réutilise
+            if cat_name in existing_cats:
+                category = existing_cats[cat_name]
+                skipped_cats += 1
+                log.append(f"📁 {cat_name} (existante)")
+            else:
+                cat_ow = {}
+                if cat_def["private_for"]:
+                    cat_ow = _build_overwrites(guild, roles, cat_def["private_for"])
+                category = await guild.create_category(cat_name, overwrites=cat_ow)
+                log.append(f"📁 {cat_name}")
+                await asyncio.sleep(0.5)
 
             for ch_def in cat_def["channels"]:
                 ch_type = ch_def[0]
@@ -917,6 +968,17 @@ async def _create_channels(guild: discord.Guild, roles: dict, log: list) -> dict
                 ch_private = ch_def[2] if len(ch_def) > 2 else None
                 mode = ch_def[3] if len(ch_def) > 3 else None
                 tags = ch_def[4] if len(ch_def) > 4 else None
+
+                # Si le salon existe déjà (même nom dans la même catégorie), on le réutilise
+                existing_match = None
+                for ch in category.channels:
+                    if ch.name == ch_name:
+                        existing_match = ch
+                        break
+                if existing_match:
+                    created[ch_name] = existing_match
+                    skipped_chans += 1
+                    continue
 
                 ch_ow = _build_overwrites(guild, roles, ch_private, mode)
                 kwargs = {"category": category}
@@ -934,10 +996,33 @@ async def _create_channels(guild: discord.Guild, roles: dict, log: list) -> dict
                         ch = await guild.create_text_channel(ch_name, **kwargs)
                     created[ch_name] = ch
                     log.append(f"   ✓ {ch_name}")
+                    await asyncio.sleep(0.5)
+                except discord.HTTPException as e:
+                    if e.status == 429:
+                        retry_after = getattr(e, "retry_after", 60)
+                        log.append(f"   ⏸️ Rate limit, pause {retry_after:.0f}s...")
+                        await asyncio.sleep(retry_after + 1)
+                        # retry
+                        try:
+                            if ch_type == "voice":
+                                ch = await guild.create_voice_channel(ch_name, **kwargs)
+                            elif ch_type == "forum":
+                                ch = await guild.create_forum(ch_name, **kwargs)
+                            else:
+                                ch = await guild.create_text_channel(ch_name, **kwargs)
+                            created[ch_name] = ch
+                            log.append(f"   ✓ {ch_name} (après pause)")
+                        except Exception as e2:
+                            log.append(f"   ✗ {ch_name} (retry) : {e2}")
+                    else:
+                        log.append(f"   ✗ {ch_name} : {e}")
                 except Exception as e:
                     log.append(f"   ✗ {ch_name} : {e}")
         except Exception as e:
             log.append(f"✗ Catégorie '{cat_def['name']}' : {e}")
+
+    if skipped_cats or skipped_chans:
+        log.append(f"ℹ️ Réutilisés : {skipped_cats} catégorie(s), {skipped_chans} salon(s).")
     return created
 
 
