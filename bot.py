@@ -20,6 +20,7 @@ DISCORD_TOKEN = os.environ["DISCORD_TOKEN"]
 
 intents = discord.Intents.default()
 intents.members = True
+intents.message_content = True  # Pour la commande de secours !sync
 bot = commands.Bot(command_prefix="!", intents=intents)
 
 
@@ -1150,16 +1151,56 @@ def _user_has_role(member: discord.Member, names) -> bool:
 # ════════════════════════════════════════════════════════════════════
 @bot.event
 async def on_ready():
-    print(f"Connecté en tant que {bot.user}")
+    print("════════════════════════════════════════")
+    print(f"✓ Connecté : {bot.user}  (ID: {bot.user.id})")
+    print(f"  Serveurs : {len(bot.guilds)}")
+    for g in bot.guilds:
+        print(f"  → {g.name}  (ID: {g.id}, {g.member_count} membres)")
+    print("════════════════════════════════════════")
+
     # Vues persistantes
     bot.add_view(SpecialtyView())
     bot.add_view(AvailabilityView())
     bot.add_view(NotificationView())
+    print("✓ Vues persistantes enregistrées")
+
+    # Sync PAR GUILD (instantané) au lieu de global (qui prend jusqu'à 1h à se propager)
     try:
-        synced = await bot.tree.sync()
-        print(f"{len(synced)} commande(s) synchronisée(s).")
+        for guild in bot.guilds:
+            bot.tree.copy_global_to(guild=guild)
+            synced = await bot.tree.sync(guild=guild)
+            print(f"✓ {len(synced)} commande(s) sync sur '{guild.name}'")
+            for cmd in synced:
+                print(f"   • /{cmd.name}")
     except Exception as e:
-        print(f"Erreur sync : {e}")
+        print(f"✗ ERREUR sync : {type(e).__name__}: {e}")
+    print("════════════════════════════════════════")
+
+
+@bot.event
+async def on_guild_join(guild: discord.Guild):
+    """Sync auto quand le bot rejoint un nouveau serveur."""
+    try:
+        bot.tree.copy_global_to(guild=guild)
+        synced = await bot.tree.sync(guild=guild)
+        print(f"✓ Bot ajouté à '{guild.name}' — {len(synced)} commande(s) sync.")
+    except Exception as e:
+        print(f"✗ Sync sur nouvelle guild : {e}")
+
+
+# Commande prefix de secours (utilise !sync en cas de pépin)
+@bot.command(name="sync")
+async def sync_prefix(ctx):
+    """Resync les commandes slash sur ce serveur (admin)."""
+    if not ctx.author.guild_permissions.administrator:
+        await ctx.reply("❌ Admin seulement.")
+        return
+    try:
+        bot.tree.copy_global_to(guild=ctx.guild)
+        synced = await bot.tree.sync(guild=ctx.guild)
+        await ctx.reply(f"✓ {len(synced)} commande(s) resync sur ce serveur.")
+    except Exception as e:
+        await ctx.reply(f"✗ Erreur : {e}")
 
 
 @bot.event
