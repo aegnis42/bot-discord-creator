@@ -114,7 +114,7 @@ NOTIFICATIONS = [
 # ════════════════════════════════════════════════════════════════════
 #  RÔLES — Structure complète
 # ════════════════════════════════════════════════════════════════════
-COL_SEP = 0  # default color, ne masque pas le nom des membres groupés sous ce séparateur
+COL_SEP = 0x2B2D31
 
 OFFICIER_PERMS = {
     "manage_messages": True, "mute_members": True,
@@ -135,23 +135,23 @@ def build_roles():
     r = []
 
     # Haut Commandement
-    r.append((SEP("COMMANDEMENT"), COL_SEP, {}, True, True))
-    r.append(("Général",   0xFFD700, {"administrator": True}, False, False))
-    r.append(("Colonel",   0xE91E63, {"administrator": True}, False, False))
-    r.append(("Commandant",0xD32F2F, COMMANDANT_PERMS,        False, False))
+    r.append((SEP("COMMANDEMENT"), COL_SEP, {}, True,  False))
+    r.append(("Général",   0xFFD700, {"administrator": True}, False, True))
+    r.append(("Colonel",   0xE91E63, {"administrator": True}, False, True))
+    r.append(("Commandant",0xD32F2F, COMMANDANT_PERMS,        False, True))
 
     # Spécialités (3 grades par spec)
     for name, _emoji, c_off, c_mem, c_rec in SPECIALTIES:
-        r.append((SEP(_strip_accents(name).upper()), COL_SEP, {}, True, True))
-        r.append((f"Officier {name}", c_off, OFFICIER_PERMS, False, False))
-        r.append((name,                c_mem, {},             False, False))
-        r.append((f"Recrue {name}",    c_rec, {},             False, False))
+        r.append((SEP(_strip_accents(name).upper()), COL_SEP, {}, True, False))
+        r.append((f"Officier {name}", c_off, OFFICIER_PERMS, False, True))
+        r.append((name,                c_mem, {},             False, True))
+        r.append((f"Recrue {name}",    c_rec, {},             False, True))
 
     # Statuts
-    r.append((SEP("STATUTS"), COL_SEP, {}, True, True))
-    r.append(("Réserviste", 0xBDBDBD, {}, False, False))
-    r.append(("Visiteur",   0x9E9E9E, {}, False, False))
-    r.append(("Allié",      0x66BB6A, {}, False, False))
+    r.append((SEP("STATUTS"), COL_SEP, {}, True, False))
+    r.append(("Réserviste", 0xBDBDBD, {}, False, True))
+    r.append(("Visiteur",   0x9E9E9E, {}, False, True))
+    r.append(("Allié",      0x66BB6A, {}, False, True))
 
     # Fonctions transversales (non hoist)
     r.append((SEP("FONCTIONS"), COL_SEP, {}, True, False))
@@ -187,33 +187,6 @@ def build_roles():
 
 
 ROLES = build_roles()
-
-
-# ════════════════════════════════════════════════════════════════════
-#  MAPPING — Rôle fonctionnel → Rôle séparateur (auto-attribution)
-# ════════════════════════════════════════════════════════════════════
-# Quand un membre reçoit un rôle fonctionnel, le bot lui ajoute aussi
-# le rôle séparateur correspondant. Comme c'est le séparateur qui est
-# "hoist", c'est lui qui apparaît comme groupe dans la sidebar.
-def _build_role_to_sep_map():
-    m = {
-        "Général":    SEP("COMMANDEMENT"),
-        "Colonel":    SEP("COMMANDEMENT"),
-        "Commandant": SEP("COMMANDEMENT"),
-        "Réserviste": SEP("STATUTS"),
-        "Visiteur":   SEP("STATUTS"),
-        "Allié":      SEP("STATUTS"),
-    }
-    for spec_name, *_ in SPECIALTIES:
-        sep = SEP(_strip_accents(spec_name).upper())
-        m[f"Officier {spec_name}"] = sep
-        m[spec_name] = sep
-        m[f"Recrue {spec_name}"] = sep
-    return m
-
-
-ROLE_TO_SEP = _build_role_to_sep_map()
-ALL_SEP_NAMES = set(ROLE_TO_SEP.values())
 
 
 # ════════════════════════════════════════════════════════════════════
@@ -255,7 +228,6 @@ def specialty_access(spec_name: str) -> list:
 def build_categories():
     cats = []
 
-
     cats.append({
         "name": C("ACCUEIL"),
         "private_for": None,
@@ -264,24 +236,12 @@ def build_categories():
             ("text",  T("regles"),              None, "readonly"),
             ("text",  T("charte-militaire"),    None, "readonly"),
             ("forum", T("presentations"),       None, None),
+            ("text",  T("verification"),        None, "readonly"),
             ("text",  T("faq"),                 None, "readonly"),
             ("text",  T("liens-utiles"),        None, "readonly"),
             ("text",  T("choix-specialite"),    None, "readonly"),
             ("text",  T("choix-disponibilite"), None, "readonly"),
             ("text",  T("choix-notifications"), None, "readonly"),
-        ],
-    })
-
-    cats.append({
-        "name": C("RECRUTEMENT"),
-        "private_for": None,  # catégorie publique pour que candidatures soit accessible
-        "channels": [
-            ("forum", T("candidatures"),     None, None),                # public : les candidats postent ici
-            ("text",  T("parrainage"),       RECRUITERS, None),          # privé recruteurs
-            ("text",  T("salon-officiers"),  LVL_OFFICIER, None),        # privé officiers
-            ("text",  T("dossiers-recrues"), RECRUITERS, None),          # privé recruteurs
-            ("voice", V("Entretien-1"),      RECRUITERS, None),          # privé recruteurs
-            ("voice", V("Entretien-2"),      RECRUITERS, None),          # privé recruteurs
         ],
     })
 
@@ -402,6 +362,19 @@ def build_categories():
     })
 
     cats.append({
+        "name": C("RECRUTEMENT"),
+        "private_for": RECRUITERS,
+        "channels": [
+            ("forum", T("candidatures"),     None, None),
+            ("text",  T("parrainage"),       None, None),
+            ("text",  T("salon-officiers"),  LVL_OFFICIER, None),
+            ("text",  T("dossiers-recrues"), None, None),
+            ("voice", V("Entretien-1"),      None, None),
+            ("voice", V("Entretien-2"),      None, None),
+        ],
+    })
+
+    cats.append({
         "name": C("BOTS"),
         "private_for": LVL_RECRUE,
         "channels": [
@@ -452,10 +425,11 @@ WELCOME_MESSAGES = {
             "Tu rejoins un régiment Wardens dédié à la coordination, la logistique et la maîtrise du terrain.\n\n"
             "**Tes premières étapes :**\n"
             "1. Lis le **règlement** et la **charte militaire**\n"
-            "2. Présente-toi dans **présentations**\n"
-            "3. Choisis ta **spécialité** dans choix-specialite (boutons)\n"
-            "4. Sélectionne tes **disponibilités** et **notifications**\n"
-            "5. Postule via le forum **candidatures**\n\n"
+            "2. Passe la **vérification**\n"
+            "3. Présente-toi dans **présentations**\n"
+            "4. Choisis ta **spécialité** dans choix-specialite (boutons)\n"
+            "5. Sélectionne tes **disponibilités** et **notifications**\n"
+            "6. Postule via le forum **candidatures**\n\n"
             "Un Recruteur viendra te chercher pour l'entretien. Bon vent, soldat."
         ),
     },
@@ -493,6 +467,15 @@ WELCOME_MESSAGES = {
             "7. **Absences** — Préviens un officier si tu pars en pause.\n"
             "8. **Inactivité** — 14 jours sans signe = rétrogradation Réserviste.\n\n"
             "**Devise :** *Introuvables, indomptables.*"
+        ),
+    },
+    T("verification"): {
+        "title": "✅ Vérification",
+        "color": 0x4CAF50,
+        "description": (
+            "Pour accéder au serveur, prouve que tu es humain.\n\n"
+            "Un bot de modération (Wick / Dyno / Carl-bot) gérera la vérification ici.\n"
+            "En attendant son installation, un officier validera manuellement."
         ),
     },
     T("faq"): {
@@ -1029,47 +1012,6 @@ async def on_member_join(member: discord.Member):
         await member.send(embed=embed)
     except (discord.Forbidden, discord.HTTPException):
         pass
-
-
-@bot.event
-async def on_member_update(before: discord.Member, after: discord.Member):
-    """Auto-attribue/retire les rôles séparateurs en fonction des rôles fonctionnels.
-
-    Quand un membre reçoit "Recrue Infanterie", le bot lui ajoute aussi
-    "】ıllıllı INFANTERIE ıllıllı【". Comme ce dernier est hoist, c'est lui
-    qui définit le groupe du membre dans la sidebar des connectés.
-    """
-    if {r.id for r in before.roles} == {r.id for r in after.roles}:
-        return  # pas de changement de rôle
-
-    guild = after.guild
-    after_names = {r.name for r in after.roles}
-
-    # Quels séparateurs le membre DOIT avoir ?
-    desired = set()
-    for r_name in after_names:
-        if r_name in ROLE_TO_SEP:
-            desired.add(ROLE_TO_SEP[r_name])
-
-    # Quels séparateurs le membre A ACTUELLEMENT ?
-    current = after_names & ALL_SEP_NAMES
-
-    to_add = desired - current
-    to_remove = current - desired
-
-    if to_add:
-        roles = [discord.utils.get(guild.roles, name=n) for n in to_add]
-        roles = [r for r in roles if r is not None]
-        if roles:
-            try: await after.add_roles(*roles, reason="Auto-attribution séparateur")
-            except: pass
-
-    if to_remove:
-        roles = [discord.utils.get(guild.roles, name=n) for n in to_remove]
-        roles = [r for r in roles if r is not None]
-        if roles:
-            try: await after.remove_roles(*roles, reason="Retrait séparateur orphelin")
-            except: pass
 
 
 # ════════════════════════════════════════════════════════════════════
