@@ -246,16 +246,6 @@ def build_categories():
     })
 
     cats.append({
-        "name": C("VOCAUX RECRUTEMENT"),
-        "private_for": RECRUITERS,
-        "channels": [
-            ("voice", V("Entretien-1"),  None, None),
-            ("voice", V("Entretien-2"),  None, None),
-            ("voice", V("Salle-Attente"), None, None),
-        ],
-    })
-
-    cats.append({
         "name": C("ANNONCES"),
         "private_for": None,
         "channels": [
@@ -278,15 +268,8 @@ def build_categories():
             ("forum", T("partages"),      None, None, ["Memes", "Screenshots", "Clips", "Fanart", "Builds", "Autres"]),
             ("forum", T("suggestions"),   None, None),
             ("forum", T("sondages"),      None, None),
-            ("voice", V("Attente"),       None, None),
-            ("voice", V("General-1"),     None, None),
-            ("voice", V("General-2"),     None, None),
-            ("voice", V("General-3"),     None, None),
-            ("voice", V("Detente-1"),     None, None),
-            ("voice", V("Detente-2"),     None, None),
-            ("voice", V("Musique-1"),     None, None),
-            ("voice", V("Musique-2"),     None, None),
-            ("voice", V("Duo"),           None, None),
+            ("voice", V("General"),       None, None),
+            ("voice", V("Musique"),       None, None),
             ("voice", V("AFK"),           None, None),
         ],
     })
@@ -295,11 +278,12 @@ def build_categories():
         "name": C("OPS COMMANDEMENT"),
         "private_for": LVL_SOLDAT,
         "channels": [
-            ("text",  T("plan-de-bataille"),     LVL_OFFICIER, None),
-            ("text",  T("ordres-du-jour"),       None, None),
+            ("text",  T("plan-de-bataille"),       LVL_OFFICIER, None),
+            ("text",  T("ordres-du-jour"),         None, None),
             ("text",  T("objectifs-prioritaires"), None, None),
-            ("forum", T("debriefings"),          None, None),
-            ("text",  T("etat-major"),           LVL_COMMANDEMENT, None),
+            ("forum", T("debriefings"),            None, None),
+            ("text",  T("etat-major"),             LVL_COMMANDEMENT, None),
+            ("voice", V("Officiers"),              LVL_OFFICIER, None),
         ],
     })
 
@@ -307,27 +291,9 @@ def build_categories():
         "name": C("OPS FRONTS"),
         "private_for": LVL_SOLDAT,
         "channels": [
-            ("text", T("comms-reserve"),    None, None),
-            ("text", T("comms-evacuation"), None, None),
-        ],
-    })
-
-    cats.append({
-        "name": C("VOCAUX OPS"),
-        "private_for": LVL_SOLDAT,
-        "channels": [
-            ("voice", V("QG"),         None, None),
-            ("voice", V("Op-1"),       None, None),
-            ("voice", V("Op-2"),       None, None),
-            ("voice", V("Op-3"),       None, None),
-            ("voice", V("Op-4"),       None, None),
-            ("voice", V("Op-5"),       None, None),
-            ("voice", V("Op-6"),       None, None),
-            ("voice", V("Op-7"),       None, None),
-            ("voice", V("Op-8"),       None, None),
-            ("voice", V("Front"),      None, None),
-            ("voice", V("Reserve"),    None, None),
-            ("voice", V("Evacuation"), None, None),
+            ("text",  T("comms-reserve"),    None, None),
+            ("text",  T("comms-evacuation"), None, None),
+            ("voice", V("QG"),               None, None),
         ],
     })
 
@@ -335,31 +301,20 @@ def build_categories():
         "name": C("LOGISTIQUE"),
         "private_for": LVL_SOLDAT,
         "channels": [
-            ("forum", T("demandes-logi"),       None, None),
-            ("text",  T("offres-logi"),         None, None),
-            ("text",  T("production-bmats"),    None, None),
-            ("text",  T("production-rmats"),    None, None),
-            ("text",  T("production-emats"),    None, None),
-            ("text",  T("production-hemats"),   None, None),
-            ("text",  T("production-vehicules"),None, None),
-            ("text",  T("production-armement"), None, None),
-            ("text",  T("convois"),             None, None),
-            ("text",  T("stockpiles"),          None, None),
-            ("text",  T("ressources-brutes"),   None, None),
-            ("text",  T("train-et-rail"),       None, None),
-            ("text",  T("comms-logi"),          None, None),
-        ],
-    })
-
-    cats.append({
-        "name": C("VOCAUX LOGI"),
-        "private_for": LVL_SOLDAT,
-        "channels": [
-            ("voice", V("Coordination-Logi"), None, None),
-            ("voice", V("Convoi-1"),          None, None),
-            ("voice", V("Convoi-2"),          None, None),
-            ("voice", V("Production"),        None, None),
-            ("voice", V("Train"),             None, None),
+            ("forum", T("demandes-logi"),         None, None),
+            ("text",  T("offres-logi"),           None, None),
+            ("text",  T("production-bmats"),      None, None),
+            ("text",  T("production-rmats"),      None, None),
+            ("text",  T("production-emats"),      None, None),
+            ("text",  T("production-hemats"),     None, None),
+            ("text",  T("production-vehicules"),  None, None),
+            ("text",  T("production-armement"),   None, None),
+            ("text",  T("convois"),               None, None),
+            ("text",  T("stockpiles"),            None, None),
+            ("text",  T("ressources-brutes"),     None, None),
+            ("text",  T("train-et-rail"),         None, None),
+            ("text",  T("comms-logi"),            None, None),
+            ("voice", V("Coordination-Logi"),     None, None),
         ],
     })
 
@@ -367,33 +322,23 @@ def build_categories():
         "name": C("RENSEIGNEMENT"),
         "private_for": LVL_SOLDAT,
         "channels": [
-            ("text",  T("intel-ennemi"),         None, None),
-            ("forum", T("cartes-et-fronts"),     None, None),
-            ("forum", T("rapports-recon"),       None, None),
-            ("forum", T("analyses-strategiques"),LVL_OFFICIER, None),
-            ("text",  T("bases-ennemies"),       None, None),
-            ("text",  T("convois-ennemis"),      None, None),
+            ("text",  T("intel-ennemi"),          None, None),
+            ("forum", T("cartes-et-fronts"),      None, None),
+            ("forum", T("rapports-recon"),        None, None),
+            ("forum", T("analyses-strategiques"), LVL_OFFICIER, None),
+            ("text",  T("bases-ennemies"),        None, None),
+            ("text",  T("convois-ennemis"),       None, None),
         ],
     })
 
-    # SPECIALITES — un salon texte par spec, privé à sa spec
-    spec_text_channels = []
+    # SPECIALITES — 1 salon texte par spec, privé à sa spec (pas de vocal, géré par le bot on-demand plus tard)
+    spec_channels = []
     for name, _e, *_ in SPECIALTIES:
-        spec_text_channels.append(("text", T(name), specialty_access(name), None))
+        spec_channels.append(("text", T(name), specialty_access(name), None))
     cats.append({
         "name": C("SPECIALITES"),
         "private_for": None,
-        "channels": spec_text_channels,
-    })
-
-    # VOCAUX SPECIALITES — un vocal par spec, privé à sa spec
-    spec_voice_channels = []
-    for name, _e, *_ in SPECIALTIES:
-        spec_voice_channels.append(("voice", V(name), specialty_access(name), None))
-    cats.append({
-        "name": C("VOCAUX SPECIALITES"),
-        "private_for": None,
-        "channels": spec_voice_channels,
+        "channels": spec_channels,
     })
 
     cats.append({
@@ -412,16 +357,7 @@ def build_categories():
             ("forum", T("formation-snipers"),       None, None),
             ("text",  T("exercices-programmes"),    None, None),
             ("forum", T("bibliotheque"),            None, None),
-        ],
-    })
-
-    cats.append({
-        "name": C("VOCAUX FORMATION"),
-        "private_for": LVL_RECRUE,
-        "channels": [
-            ("voice", V("Salle-Cours-1"), None, None),
-            ("voice", V("Salle-Cours-2"), None, None),
-            ("voice", V("Exercice"),      None, None),
+            ("voice", V("Salle-Cours"),             None, None),
         ],
     })
 
@@ -433,6 +369,8 @@ def build_categories():
             ("text",  T("parrainage"),       None, None),
             ("text",  T("salon-officiers"),  LVL_OFFICIER, None),
             ("text",  T("dossiers-recrues"), None, None),
+            ("voice", V("Entretien-1"),      None, None),
+            ("voice", V("Entretien-2"),      None, None),
         ],
     })
 
@@ -466,16 +404,6 @@ def build_categories():
             ("text", T("aide-discord"),   None, None),
             ("text", T("contact-staff"),  None, None),
             ("text", T("signalements"),   None, None),
-        ],
-    })
-
-    cats.append({
-        "name": C("VOCAUX COMMAND"),
-        "private_for": LVL_OFFICIER,
-        "channels": [
-            ("voice", V("Officiers"),  None, None),
-            ("voice", V("Strategie"),  None, None),
-            ("voice", V("Etat-Major"), LVL_COMMANDEMENT, None),
         ],
     })
 
@@ -1185,7 +1113,6 @@ async def front_cmd(interaction: discord.Interaction, nom: str):
     guild = interaction.guild
 
     fronts_cat = _find_category_by_keyword(guild, "OPS FRONTS")
-    voice_cat  = _find_category_by_keyword(guild, "VOCAUX OPS")
     if not fronts_cat:
         await interaction.followup.send("❌ Catégorie OPS FRONTS introuvable. Lance /create d'abord.", ephemeral=True)
         return
@@ -1204,12 +1131,11 @@ async def front_cmd(interaction: discord.Interaction, nom: str):
     except Exception as e:
         msg_lines.append(f"• Salon texte : ❌ {e}")
 
-    if voice_cat:
-        try:
-            voice_ch = await guild.create_voice_channel(voice_name, category=voice_cat, overwrites=ow)
-            msg_lines.append(f"• Salon vocal : {voice_ch.mention}")
-        except Exception as e:
-            msg_lines.append(f"• Salon vocal : ❌ {e}")
+    try:
+        voice_ch = await guild.create_voice_channel(voice_name, category=fronts_cat, overwrites=ow)
+        msg_lines.append(f"• Salon vocal : {voice_ch.mention}")
+    except Exception as e:
+        msg_lines.append(f"• Salon vocal : ❌ {e}")
 
     await interaction.followup.send("\n".join(msg_lines))
 
@@ -1229,7 +1155,6 @@ async def close_front_cmd(interaction: discord.Interaction, nom: str):
     guild = interaction.guild
 
     fronts_cat   = _find_category_by_keyword(guild, "OPS FRONTS")
-    voice_cat    = _find_category_by_keyword(guild, "VOCAUX OPS")
     archives_cat = _find_category_by_keyword(guild, "ARCHIVES")
     if not archives_cat:
         await interaction.followup.send("❌ Catégorie ARCHIVES introuvable.", ephemeral=True)
@@ -1245,10 +1170,9 @@ async def close_front_cmd(interaction: discord.Interaction, nom: str):
             if search in d and "comms" not in d:  # protège comms-reserve et comms-evacuation
                 text_ch = ch
                 break
-
-    if voice_cat:
-        for ch in voice_cat.voice_channels:
-            if search in _denorm(ch.name):
+        for ch in fronts_cat.voice_channels:
+            d = _denorm(ch.name)
+            if search in d and "qg" not in d:  # protège le vocal QG par défaut
                 voice_ch = ch
                 break
 
