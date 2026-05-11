@@ -1,148 +1,180 @@
-# Bot Discord — Régiment Foxhole
+# Bot Discord — 404e RI "Les Disparus" (Wardens)
 
-Bot complet pour générer un serveur Discord prêt à l'emploi pour un régiment Foxhole.
+Bot complet qui construit un serveur Foxhole prêt à l'emploi en une commande.
 
-## Deux commandes
+## 4 commandes
 
-- **`/create`** — construit tout le serveur en une fois (rôles, salons, permissions, mode Communauté, messages d'accueil, boutons de choix de spécialité).
-- **`/delete`** — supprime tous les salons et rôles (avec un bouton de confirmation rouge).
-
----
+| Commande | Effet |
+|---|---|
+| `/create` | Construit toute la structure (rôles + salons + paramètres + boutons) |
+| `/delete` | Supprime tout (avec confirmation) |
+| `/front <nom>` | Crée un salon texte + vocal de front (Officier Comms+) |
+| `/close_front <nom>` | Archive le salon texte vers ARCHIVES, supprime le vocal |
 
 ## Ce qui est créé par `/create`
 
-### 🪖 Rôles (47 au total)
-
-**Haut Commandement** (au-dessus des officiers, groupe séparé en haut de la sidebar) :
-- Colonel (Administrateur)
-- Commandant (gère salons, rôles, kick, ban, etc.)
-- Capitaine (modération, gestion threads)
-
-**Fonctions transversales** (non affichées séparément) :
-- Recruteur, Formateur, Diplomate, Modérateur
-
-**Pour chaque spécialité — 7 spécialités × 4 grades** :
-- 🪖 Infanterie : Officier / Sergent / Soldat / Recrue
-- 🚗 Blindés : Officier / Sergent / Soldat / Recrue
-- 💥 Artillerie : Officier / Sergent / Soldat / Recrue
-- ⚓ Marine : Officier / Sergent / Soldat / Recrue
-- 🚛 Logistique : Officier / Sergent / Soldat / Recrue
-- ⚕️ Médic : Officier / Sergent / Soldat / Recrue
-- 🎯 Partisan : Officier / Sergent / Soldat / Recrue
-
-**Visiteurs** : Allié, Invité
-
-Chaque spécialité a sa propre **palette de couleur dégradée** (Officier sombre → Recrue clair).
-Les séparateurs `】ıllıllı NOM ıllıllı【` organisent visuellement la liste des rôles côté admin.
-
-### 📁 Catégories et salons (14 catégories, ~60 salons)
-
-| Catégorie | Type | Accès |
-|---|---|---|
-| 🚪 ENTREE | Règlement (lecture seule), Bienvenue, Annonces, Choix de spécialité | Public |
-| 📋 RECRUTEMENT | Info publique, forum Candidatures, salon recruteurs | Mixte |
-| 🎓 FORMATION | Forums Tutos / Questions-Réponses / Entraînements, Guides | Public |
-| 📢 INFORMATIONS | Actualités, Calendrier, News Foxhole, MAJ | Public (lecture) |
-| 💬 GENERAL | Discussion, Memes, Médias, Hors-Sujet, Bot, Musique | Public |
-| ⚔️ OPERATIONS | Ops en cours, forums Planif/Debriefs/Renseignements, Cartes, Screenshots | Public |
-| 🚛 LOGISTIQUE | Forum Demandes, Production, Convois, forum Stocks, Records | Public |
-| 🎖️ SALONS-SPECIALITES | 1 salon par spécialité, **privé à cette spécialité** | Spécialités |
-| 🪖 SOUS-OFFICIERS | Salon Sergents, Coordination | Sergent+ |
-| ⭐ OFFICIERS | Salon Officiers, Stratégie, forum Planif EM, Diplomatie, Logs | Officiers |
-| 🔊 VOCAUX GENERAUX | Attente, General 1/2, Détente, Musique, AFK | Public |
-| ⚔️ VOCAUX OPS | QG, Op 1-4, Logistique, Front | Public |
-| 🎖️ VOCAUX SPECIALITES | 1 vocal par spécialité | Spécialités |
-| ⭐ VOCAUX COMMAND | Officiers, Stratégie | Officiers |
-
-### 🤖 Automatisations supplémentaires
-
-- **Mode Communauté activé** automatiquement (requis pour les forums)
-- **Salon des règles** et **Actualités** configurés au niveau serveur
-- **Salon système** (notifs de bienvenue Discord) pointé sur Bienvenue
-- **5 messages d'accueil** envoyés et épinglés dans les bons salons
-- **Boutons de choix de spécialité** persistants dans le salon dédié — les nouveaux cliquent eux-mêmes pour obtenir le rôle Recrue de leur branche
-- **DM de bienvenue** envoyé aux nouveaux membres (si leurs DM sont ouverts)
+- **~75 rôles** dont ~36 hoist (visibles comme groupes dans la sidebar)
+- **19 catégories**, ~90 salons (~40 vocaux, ~17 forums)
+- **Mode Communauté activé** automatiquement
+- **Boutons persistants** pour choisir spécialité / dispos / notifications
+- **Embeds d'accueil** épinglés (règlement, charte, FAQ, etc.)
+- **DM de bienvenue** envoyé à chaque nouveau membre
 
 ---
 
-## Installation (1ʳᵉ fois)
+## Installation
 
-### 1. Créer le bot Discord
+### 1. Bot Discord
 
-1. https://discord.com/developers/applications → **New Application**
-2. Onglet **Bot** :
-   - Active **SERVER MEMBERS INTENT**
-   - **Reset Token** → copie le token (garde-le secret)
+1. https://discord.com/developers/applications → New Application
+2. Onglet **Bot** : active **SERVER MEMBERS INTENT**, Reset Token, copie-le
 3. Onglet **OAuth2 → URL Generator** :
    - Scopes : `bot`, `applications.commands`
    - Permissions : **Administrator**
-4. Ouvre l'URL générée, sélectionne ton serveur, autorise.
+4. Ouvre l'URL, autorise sur ton serveur
 
 ### 2. Placer le rôle du bot tout en haut
 
-Paramètres du serveur → **Rôles** → glisse le rôle du bot **au-dessus** de tous les rôles qu'il va créer (juste en dessous du rôle "Server Booster" s'il existe).
-Sans ça, le bot ne pourra pas gérer les rôles qu'il crée.
+Paramètres du serveur → Rôles → glisse le rôle du bot **au-dessus** de tous les autres.
+Indispensable, sinon il ne pourra pas gérer les rôles qu'il crée.
 
-### 3. Déployer sur Railway (gratuit)
+### 3. Déployer sur Railway
 
-1. https://railway.app → connexion via GitHub
-2. Push `bot.py` + `requirements.txt` sur un dépôt GitHub
-3. Railway → **New Project** → **Deploy from GitHub repo**
-4. Onglet **Variables** → ajoute :
-   - `DISCORD_TOKEN` = ton token Discord
-5. Onglet **Settings → Deploy** → Custom Start Command : `python bot.py`
-6. Vérifie les logs : tu dois voir `Connecté en tant que ...`
+1. Pousse `bot.py` et `requirements.txt` sur un dépôt GitHub
+2. Railway → New Project → Deploy from GitHub repo
+3. Variables → ajoute `DISCORD_TOKEN`
+4. Settings → Custom Start Command : `python bot.py`
 
 ---
 
 ## Utilisation
 
-### Tout créer
-Tape `/create` dans n'importe quel salon de ton serveur. Le bot prend ~1 minute pour tout construire et affiche un récap.
-
-### Tout supprimer
-Tape `/delete`. Un bouton rouge "OUI, tout supprimer" apparaît. Confirme pour tout wiper.
-
-Tu peux enchaîner `/delete` → `/create` pour repartir à zéro proprement.
+Une fois le bot connecté :
+1. `/create` (~1-2 min, construit tout)
+2. Tu installes les bots tiers de la checklist ci-dessous
+3. Tu uploades les emojis customs et bannières
 
 ---
 
-## Comment les nouveaux membres rejoignent
+## ✅ Checklist bots tiers à installer après /create
 
-1. Ils arrivent sur le serveur → reçoivent un DM de bienvenue automatique
-2. Ils lisent le règlement, voient `Bienvenue` dans le salon système
-3. Ils vont dans `Choix-de-Specialite` → cliquent sur le bouton de leur spécialité (Infanterie, Blindés, etc.) → reçoivent automatiquement le rôle Recrue correspondant
-4. Ils postulent dans le forum `Candidatures` (modèle de candidature dans `Comment-Nous-Rejoindre`)
-5. Un Recruteur les valide ; un Sergent les promeut quand ils progressent
+Le bot Python ne fait pas tout. Voici ce qu'il manque, par priorité :
+
+### 🔴 Indispensables
+
+**1. Ticket Tool** — système de tickets pour candidatures et signalements
+- Site : https://tickettool.xyz
+- Configurer un panel dans le forum `『』candidatures` (mais le forum natif Discord marche aussi)
+- Configurer un panel pour `『』signalements` et `『』contact-staff`
+- Permissions : Recruteur pour candidatures, Modérateur + Officier+ pour signalements
+
+**2. Carl-bot** ou **Dyno** — modération, anti-raid, vérification, reaction roles
+- Carl-bot : https://carl.gg
+- Dyno : https://dyno.gg
+- À configurer :
+  - **Automod** : anti-spam, anti-mention, anti-invite, anti-cap
+  - **Anti-raid** : lockdown auto en cas d'invasion
+  - **Verification** : reaction role dans `『』verification` qui donne accès au serveur
+  - **Logs de modération** dans `『』logs-bot` (à créer si absent) ou `『』signalements`
+
+### 🟠 Très utiles
+
+**3. Sesh** — planification d'opérations
+- Site : https://sesh.fyi
+- Pour créer des événements avec RSVP, fuseaux horaires, rappels
+- Utiliser dans `『』evenements`
+
+**4. Foxhole War Stats Bot** — état de la guerre en direct
+- Recherche "Foxhole" sur top.gg ou disboard.org
+- Affiche le score, les hex contrôlés, les stockpiles
+- Configurer dans `『』etat-de-la-guerre`
+
+### 🟡 Utiles
+
+**5. Statbot** — statistiques d'activité
+- https://statbot.net
+- Identifier les membres actifs vs inactifs
+
+**6. Birthday Bot** ou **Carl-bot anniversaires**
+- Pour gérer le salon `『』anniversaires`
+
+**7. Logi Calculator / Artillery Bot**
+- Bots Foxhole pour les calculs
+- À configurer dans `『』calculatrices`
+
+### ⚪ Optionnels
+
+**8. MEE6** ou **Arcane** — niveaux/XP, gamification
+**9. Tupperbox** — RP/personae si vous voulez du roleplay
 
 ---
 
-## Notes importantes
+## 🎨 À faire à la main
 
-- **Les forums nécessitent le mode Communauté** — le bot l'active automatiquement, mais ça nécessite que ton serveur ait un niveau de vérification minimal et un filtre de contenu activé (le bot les configure aussi).
-- **Le rôle du bot doit être plus haut que les rôles qu'il manipule.** S'il est en bas de la liste des rôles, `/create` créera les rôles mais ne pourra pas les modifier ni les attribuer via les boutons.
-- **`/delete` ignore les rôles plus hauts que le bot** et les rôles "managed" (rôles de bots, boosts Nitro).
-- Le salon où tu lances `/delete` est gardé pour afficher le résultat — supprime-le manuellement après si tu veux un nettoyage total.
-- Le **DM de bienvenue** échoue silencieusement si l'utilisateur a fermé ses DM (Discord normal).
+### Bannière et icône du serveur
+
+Paramètres du serveur → Aperçu → uploader :
+- **Icône** : logo du régiment (PNG 512x512 minimum)
+- **Bannière** : 960x540 pixels minimum
+- **Splash d'invitation** (si Boost niveau 1+)
+
+### Emojis customs (à créer/uploader)
+
+Paramètres du serveur → Émojis → uploader les fichiers PNG.
+
+**Insignes de grade** (10 emojis) : un par grade militaire
+**Ressources Foxhole** : `:bmat:`, `:rmat:`, `:emat:`, `:hemat:`, `:scrap:`, `:components:`, `:oil:`, `:salvage:`
+**Véhicules** : `:tank:`, `:halftrack:`, `:navire:`, `:train:`
+**Armes** : `:fusil:`, `:mortier:`, `:at:`, `:mg:`
+**Statuts** : `:en_op:`, `:kia:`, `:mia:`, `:rtb:`, `:afk:`
+
+Discord limite à 50 emojis sans boost. Priorise les ressources et les véhicules.
 
 ---
 
-## Personnaliser la structure
+## 🛠️ Personnalisation
 
-Tout est en haut du fichier `bot.py` :
+Tout est en haut de `bot.py` :
 
-- **`SPECIALTIES`** — la liste des spécialités, leur emoji, leurs 4 couleurs (officier → recrue). Ajoute, retire, change.
-- **`RANKS`** — les grades à l'intérieur d'une spécialité. Par défaut `["Officier", "Sergent", "Soldat", "Recrue"]`. Tu peux changer (ex: `["Capitaine", "Lieutenant", "Sergent", "Caporal", "Soldat", "Recrue"]`).
-- **`HIGH_COMMAND`** — les rôles au-dessus des officiers.
-- **`CATEGORIES`** dans `build_categories()` — la structure complète des salons.
-- **`WELCOME_MESSAGES`** — les embeds envoyés dans certains salons.
+- **`SPECIALTIES`** (ligne ~72) — liste des 10 spécialités, emoji, couleurs des 3 grades
+- **`AVAILABILITIES`** (ligne ~88) — créneaux de disponibilité auto-attribuables
+- **`NOTIFICATIONS`** (ligne ~96) — types de notifications opt-in
+- **`build_roles()`** (ligne ~118) — structure complète des rôles
+- **`build_categories()`** (ligne ~190) — catégories et salons
+- **`WELCOME_MESSAGES`** (ligne ~460) — embeds d'accueil
 
-Après modification, push sur GitHub → Railway redéploie tout seul. Puis `/delete` + `/create` pour appliquer.
+Pour modifier la structure : édite ces sections, push sur GitHub → Railway redéploie tout seul → `/delete` + `/create` sur Discord.
+
+---
+
+## ⚠️ Notes importantes
+
+- **Mode Communauté requis** pour les forums : le bot l'active tout seul.
+- **Le rôle du bot doit être tout en haut** dans la hiérarchie Discord (sinon `/delete` et `/create` n'arriveront pas à modifier les rôles qu'ils créent).
+- **`/front` et `/close_front`** sont restreints à Officier Comms et Officier+ pour éviter les abus.
+- Les **archives de fronts** s'accumulent dans la catégorie ARCHIVES — purge manuellement si ça pollue.
+
+---
+
+## 💡 Flow d'onboarding du nouveau membre
+
+1. Arrivée → reçoit un **DM de bienvenue** automatique
+2. Voit `『』bienvenue` (notification système Discord)
+3. Lit `『』regles` + `『』charte-militaire`
+4. Passe par `『』verification` (à gérer par Wick/Dyno)
+5. Va dans `『』choix-specialite` → clique sur sa branche → reçoit **Recrue [Spec]**
+6. Clique sur `『』choix-disponibilite` pour ses créneaux
+7. Active des `『』choix-notifications`
+8. Se présente dans le forum `『』presentations`
+9. Postule dans le forum `『』candidatures` (avec template fourni)
+10. Recruteur le contacte dans `』Entretien-1【` ou `』Entretien-2【` (vocaux)
+11. Validation → un Officier transforme **Recrue X** en **X** (membre confirmé)
+12. Plus tard, promotion en **Officier X** par un Officier+
 
 ---
 
 ## Coûts
 
-- **Railway** : ~500h/mois gratuites (suffisant pour faire tourner le bot en continu)
+- **Railway** : ~500h/mois gratuites (suffisant pour un serveur 24/7)
 - **Discord Developer** : gratuit
-- **Aucune API payante** (pas d'OpenAI/Anthropic) — c'est 100 % gratuit à utiliser.
+- **Bots tiers** : tous ont un tier gratuit suffisant pour 100+ membres
