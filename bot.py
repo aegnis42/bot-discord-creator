@@ -12,7 +12,6 @@ Variables d'environnement requises :
 """
 
 import os
-import asyncio
 import discord
 from discord import app_commands
 from discord.ext import commands
@@ -21,14 +20,7 @@ DISCORD_TOKEN = os.environ["DISCORD_TOKEN"]
 
 intents = discord.Intents.default()
 intents.members = True
-intents.message_content = True  # Pour la commande de secours !sync
-bot = commands.Bot(
-    command_prefix="!",
-    intents=intents,
-    # Si Discord demande d'attendre plus de 10s pour un rate limit,
-    # on raise plutôt que d'attendre indéfiniment et passer pour mort.
-    max_ratelimit_timeout=10,
-)
+bot = commands.Bot(command_prefix="!", intents=intents)
 
 
 # ════════════════════════════════════════════════════════════════════
@@ -885,20 +877,9 @@ def _build_overwrites(guild, roles_dict, allowed_role_names, mode=None):
 # ════════════════════════════════════════════════════════════════════
 #  CRÉATION — Rôles
 # ════════════════════════════════════════════════════════════════════
-async def _create_roles(guild: discord.Guild, log: list, progress_cb=None) -> dict:
+async def _create_roles(guild: discord.Guild, log: list) -> dict:
     created = {}
-    existing = {r.name: r for r in guild.roles}
-    skipped = 0
-    new_count = 0
-    total = len(ROLES)
-
-    for idx, (name, color, perms_dict, is_sep, hoist) in enumerate(ROLES, 1):
-        # Si le rôle existe déjà, on le réutilise (idempotent)
-        if name in existing:
-            created[name] = existing[name]
-            skipped += 1
-            continue
-
+    for name, color, perms_dict, is_sep, hoist in ROLES:
         try:
             role = await guild.create_role(
                 name=name,
@@ -909,62 +890,25 @@ async def _create_roles(guild: discord.Guild, log: list, progress_cb=None) -> di
                 reason="Auto via /create",
             )
             created[name] = role
-            new_count += 1
             tag = "📌" if hoist else ("➖" if is_sep else "  ")
             log.append(f"{tag} {name}")
-
-            # Progress update tous les 10 rôles
-            if progress_cb and new_count % 10 == 0:
-                await progress_cb(f"⏳ Rôles créés : {new_count} (sur {total - skipped} à faire)…")
-
-            # Pause anti rate-limit : 50 créations/10min Discord → 1.5s mini
-            await asyncio.sleep(1.5)
-
-        except discord.RateLimited as e:
-            log.append(f"⏸️ RATE LIMIT à `{name}` (rôle {idx}/{total}).")
-            log.append(f"   Discord demande **{e.retry_after:.0f} secondes** d'attente.")
-            log.append(f"   ➡ Attends ~{int(e.retry_after / 60) + 1} minute(s) puis relance `/create` — il reprendra où il s'est arrêté.")
-            raise  # remonte pour interrompre /create avec ce message
         except Exception as e:
-            log.append(f"✗ Rôle '{name}' : {type(e).__name__}: {e}")
-
-    if skipped:
-        log.append(f"ℹ️ {skipped} rôle(s) déjà existant(s), réutilisé(s).")
-    if new_count:
-        log.append(f"➕ {new_count} nouveau(x) rôle(s) créé(s).")
+            log.append(f"✗ Rôle '{name}' : {e}")
     return created
 
 
 # ════════════════════════════════════════════════════════════════════
 #  CRÉATION — Salons
 # ════════════════════════════════════════════════════════════════════
-async def _create_channels(guild: discord.Guild, roles: dict, log: list, progress_cb=None) -> dict:
+async def _create_channels(guild: discord.Guild, roles: dict, log: list) -> dict:
     created = {}
-    existing_cats = {c.name: c for c in guild.categories}
-    skipped_cats = 0
-    skipped_chans = 0
-    new_chans = 0
-
     for cat_def in CATEGORIES:
         try:
-            cat_name = cat_def["name"]
-            if cat_name in existing_cats:
-                category = existing_cats[cat_name]
-                skipped_cats += 1
-                log.append(f"📁 {cat_name} (existante)")
-            else:
-                cat_ow = {}
-                if cat_def["private_for"]:
-                    cat_ow = _build_overwrites(guild, roles, cat_def["private_for"])
-                try:
-                    category = await guild.create_category(cat_name, overwrites=cat_ow)
-                    log.append(f"📁 {cat_name}")
-                    await asyncio.sleep(1.0)
-                except discord.RateLimited as e:
-                    log.append(f"⏸️ RATE LIMIT à la catégorie `{cat_name}`.")
-                    log.append(f"   Discord demande **{e.retry_after:.0f} secondes** d'attente.")
-                    log.append(f"   ➡ Attends ~{int(e.retry_after / 60) + 1} minute(s) puis relance `/create`.")
-                    raise
+            cat_ow = {}
+            if cat_def["private_for"]:
+                cat_ow = _build_overwrites(guild, roles, cat_def["private_for"])
+            category = await guild.create_category(cat_def["name"], overwrites=cat_ow)
+            log.append(f"📁 {cat_def['name']}")
 
             for ch_def in cat_def["channels"]:
                 ch_type = ch_def[0]
@@ -972,17 +916,6 @@ async def _create_channels(guild: discord.Guild, roles: dict, log: list, progres
                 ch_private = ch_def[2] if len(ch_def) > 2 else None
                 mode = ch_def[3] if len(ch_def) > 3 else None
                 tags = ch_def[4] if len(ch_def) > 4 else None
-
-                # Si le salon existe déjà, on le réutilise
-                existing_match = None
-                for ch in category.channels:
-                    if ch.name == ch_name:
-                        existing_match = ch
-                        break
-                if existing_match:
-                    created[ch_name] = existing_match
-                    skipped_chans += 1
-                    continue
 
                 ch_ow = _build_overwrites(guild, roles, ch_private, mode)
                 kwargs = {"category": category}
@@ -999,25 +932,11 @@ async def _create_channels(guild: discord.Guild, roles: dict, log: list, progres
                     else:
                         ch = await guild.create_text_channel(ch_name, **kwargs)
                     created[ch_name] = ch
-                    new_chans += 1
                     log.append(f"   ✓ {ch_name}")
-                    if progress_cb and new_chans % 10 == 0:
-                        await progress_cb(f"⏳ Salons créés : {new_chans}…")
-                    await asyncio.sleep(1.0)
-                except discord.RateLimited as e:
-                    log.append(f"⏸️ RATE LIMIT au salon `{ch_name}`.")
-                    log.append(f"   Discord demande **{e.retry_after:.0f} secondes** d'attente.")
-                    log.append(f"   ➡ Attends ~{int(e.retry_after / 60) + 1} minute(s) puis relance `/create`.")
-                    raise
                 except Exception as e:
-                    log.append(f"   ✗ {ch_name} : {type(e).__name__}: {e}")
-        except discord.RateLimited:
-            raise
+                    log.append(f"   ✗ {ch_name} : {e}")
         except Exception as e:
-            log.append(f"✗ Catégorie '{cat_def['name']}' : {type(e).__name__}: {e}")
-
-    if skipped_cats or skipped_chans:
-        log.append(f"ℹ️ Réutilisés : {skipped_cats} catégorie(s), {skipped_chans} salon(s).")
+            log.append(f"✗ Catégorie '{cat_def['name']}' : {e}")
     return created
 
 
@@ -1231,56 +1150,16 @@ def _user_has_role(member: discord.Member, names) -> bool:
 # ════════════════════════════════════════════════════════════════════
 @bot.event
 async def on_ready():
-    print("════════════════════════════════════════")
-    print(f"✓ Connecté : {bot.user}  (ID: {bot.user.id})")
-    print(f"  Serveurs : {len(bot.guilds)}")
-    for g in bot.guilds:
-        print(f"  → {g.name}  (ID: {g.id}, {g.member_count} membres)")
-    print("════════════════════════════════════════")
-
+    print(f"Connecté en tant que {bot.user}")
     # Vues persistantes
     bot.add_view(SpecialtyView())
     bot.add_view(AvailabilityView())
     bot.add_view(NotificationView())
-    print("✓ Vues persistantes enregistrées")
-
-    # Sync PAR GUILD (instantané) au lieu de global (qui prend jusqu'à 1h à se propager)
     try:
-        for guild in bot.guilds:
-            bot.tree.copy_global_to(guild=guild)
-            synced = await bot.tree.sync(guild=guild)
-            print(f"✓ {len(synced)} commande(s) sync sur '{guild.name}'")
-            for cmd in synced:
-                print(f"   • /{cmd.name}")
+        synced = await bot.tree.sync()
+        print(f"{len(synced)} commande(s) synchronisée(s).")
     except Exception as e:
-        print(f"✗ ERREUR sync : {type(e).__name__}: {e}")
-    print("════════════════════════════════════════")
-
-
-@bot.event
-async def on_guild_join(guild: discord.Guild):
-    """Sync auto quand le bot rejoint un nouveau serveur."""
-    try:
-        bot.tree.copy_global_to(guild=guild)
-        synced = await bot.tree.sync(guild=guild)
-        print(f"✓ Bot ajouté à '{guild.name}' — {len(synced)} commande(s) sync.")
-    except Exception as e:
-        print(f"✗ Sync sur nouvelle guild : {e}")
-
-
-# Commande prefix de secours (utilise !sync en cas de pépin)
-@bot.command(name="sync")
-async def sync_prefix(ctx):
-    """Resync les commandes slash sur ce serveur (admin)."""
-    if not ctx.author.guild_permissions.administrator:
-        await ctx.reply("❌ Admin seulement.")
-        return
-    try:
-        bot.tree.copy_global_to(guild=ctx.guild)
-        synced = await bot.tree.sync(guild=ctx.guild)
-        await ctx.reply(f"✓ {len(synced)} commande(s) resync sur ce serveur.")
-    except Exception as e:
-        await ctx.reply(f"✗ Erreur : {e}")
+        print(f"Erreur sync : {e}")
 
 
 @bot.event
@@ -1359,57 +1238,29 @@ async def create_cmd(interaction: discord.Interaction):
     log = []
     guild = interaction.guild
 
-    # Helper pour envoyer des updates pendant le travail long
-    async def progress(msg):
-        try:
-            await interaction.followup.send(msg, ephemeral=True)
-        except Exception:
-            pass
+    log.append("**=== ÉTAPE 1 — Mode Communauté ===**")
+    temp_pair = await _ensure_community(guild, log)
 
-    try:
-        log.append("**=== ÉTAPE 1 — Mode Communauté ===**")
-        temp_pair = await _ensure_community(guild, log)
-        await progress("⏳ Mode Communauté OK. Création des rôles…")
+    log.append("\n**=== ÉTAPE 2 — Rôles ===**")
+    log.append("*(📌 = visible comme groupe dans la sidebar)*")
+    roles = await _create_roles(guild, log)
 
-        log.append("\n**=== ÉTAPE 2 — Rôles ===**")
-        log.append("*(📌 = visible comme groupe dans la sidebar)*")
-        roles = await _create_roles(guild, log, progress_cb=progress)
-        await progress(f"✓ {len(roles)} rôles prêts. Création des salons…")
+    log.append("\n**=== ÉTAPE 3 — Salons ===**")
+    channels = await _create_channels(guild, roles, log)
 
-        log.append("\n**=== ÉTAPE 3 — Salons ===**")
-        channels = await _create_channels(guild, roles, log, progress_cb=progress)
-        await progress(f"✓ {len(channels)} salons prêts. Configuration finale…")
+    log.append("\n**=== ÉTAPE 4 — Paramètres serveur ===**")
+    await _finalize_server_config(guild, channels, temp_pair, log)
 
-        log.append("\n**=== ÉTAPE 4 — Paramètres serveur ===**")
-        await _finalize_server_config(guild, channels, temp_pair, log)
+    log.append("\n**=== ÉTAPE 5 — Messages et boutons ===**")
+    await _send_welcome_messages(channels, log)
 
-        log.append("\n**=== ÉTAPE 5 — Messages et boutons ===**")
-        await _send_welcome_messages(channels, log)
-        await progress("⏳ Seed des forums (posts d'intro)…")
+    log.append("\n**=== ÉTAPE 6 — Seed des forums (partages, production, academie, intel, archives, support) ===**")
+    await _seed_forums(channels, log)
 
-        log.append("\n**=== ÉTAPE 6 — Seed des forums ===**")
-        await _seed_forums(channels, log)
-
-        log.append(
-            f"\n✅ **Terminé** — {len(roles)} rôles, {len(CATEGORIES)} catégories, {len(channels)} salons."
-        )
-        await _send_long(interaction, "\n".join(log))
-
-    except discord.RateLimited as e:
-        # Discord nous bloque temporairement — on arrête proprement
-        log.append("")
-        log.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-        log.append(f"🛑 **RATE LIMIT DISCORD — Arrêt à mi-parcours**")
-        log.append(f"")
-        log.append(f"Discord limite la création de rôles/salons à ~50 / 10 minutes.")
-        log.append(f"⏰ Attends **{int(e.retry_after / 60) + 1} minute(s)** puis relance `/create`.")
-        log.append(f"Le bot **reprendra là où il s'est arrêté** (les rôles/salons déjà créés ne sont pas recréés).")
-        await _send_long(interaction, "\n".join(log))
-    except Exception as e:
-        log.append(f"\n💥 **ERREUR FATALE** : {type(e).__name__}: {e}")
-        import traceback
-        log.append(f"```\n{traceback.format_exc()[:1500]}\n```")
-        await _send_long(interaction, "\n".join(log))
+    log.append(
+        f"\n✅ **Terminé** — {len(roles)} rôles, {len(CATEGORIES)} catégories, {len(channels)} salons."
+    )
+    await _send_long(interaction, "\n".join(log))
 
 
 # ════════════════════════════════════════════════════════════════════
