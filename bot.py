@@ -260,13 +260,15 @@ def build_categories():
         "name": C("ACCUEIL"),
         "private_for": None,
         "channels": [
-            ("text",  T("bienvenue"),        None, "readonly"),
-            ("text",  T("regles"),           None, "readonly"),
-            ("text",  T("charte-militaire"), None, "readonly"),
-            ("forum", T("presentations"),    None, None),
-            ("text",  T("faq"),              None, "readonly"),
-            ("text",  T("liens-utiles"),     None, "readonly"),
-            ("text",  T("choix-roles"),      None, "readonly"),  # fusion des 3 anciens choix-*
+            ("text",  T("bienvenue"),           None, "readonly"),
+            ("text",  T("regles"),              None, "readonly"),
+            ("text",  T("charte-militaire"),    None, "readonly"),
+            ("forum", T("presentations"),       None, None),
+            ("text",  T("faq"),                 None, "readonly"),
+            ("text",  T("liens-utiles"),        None, "readonly"),
+            ("text",  T("choix-specialite"),    None, "readonly"),
+            ("text",  T("choix-disponibilite"), None, "readonly"),
+            ("text",  T("choix-notifications"), None, "readonly"),
         ],
     })
 
@@ -274,10 +276,12 @@ def build_categories():
         "name": C("RECRUTEMENT"),
         "private_for": None,  # catégorie publique pour que candidatures soit accessible
         "channels": [
-            ("forum", T("candidatures"),     None, None),         # public : les candidats postent ici
-            ("text",  T("salon-officiers"),  LVL_OFFICIER, None), # privé officiers
-            ("text",  T("dossiers-recrues"), RECRUITERS, None),   # privé recruteurs
-            ("voice", V("Entretien"),        RECRUITERS, None),   # privé recruteurs
+            ("forum", T("candidatures"),     None, None),                # public : les candidats postent ici
+            ("text",  T("parrainage"),       RECRUITERS, None),          # privé recruteurs
+            ("text",  T("salon-officiers"),  LVL_OFFICIER, None),        # privé officiers
+            ("text",  T("dossiers-recrues"), RECRUITERS, None),          # privé recruteurs
+            ("voice", V("Entretien-1"),      RECRUITERS, None),          # privé recruteurs
+            ("voice", V("Entretien-2"),      RECRUITERS, None),          # privé recruteurs
         ],
     })
 
@@ -285,10 +289,12 @@ def build_categories():
         "name": C("ANNONCES"),
         "private_for": None,
         "channels": [
-            ("text", T("annonces"),          None, "readonly"),
-            ("text", T("patch-notes"),       None, "readonly"),
-            ("text", T("etat-de-la-guerre"), None, "readonly"),
-            ("text", T("evenements"),        None, "readonly"),
+            ("text", T("annonces-serveur"),    None, "readonly"),
+            ("text", T("annonces-regiment"),   None, "readonly"),
+            ("text", T("patch-notes"),         None, "readonly"),
+            ("text", T("etat-de-la-guerre"),   None, "readonly"),
+            ("text", T("evenements"),          None, "readonly"),
+            ("text", T("hall-of-fame"),        None, "readonly"),
         ],
     })
 
@@ -296,12 +302,15 @@ def build_categories():
         "name": C("COMMUNAUTE"),
         "private_for": None,
         "channels": [
-            ("text",  T("general"),     None, None),
-            ("forum", T("partages"),    None, None, ["Memes", "Screenshots", "Clips", "Fanart", "Builds", "Autres"]),
-            ("forum", T("suggestions"), None, None),
-            ("voice", V("General"),     None, None),
-            ("voice", V("Musique"),     None, None),
-            ("voice", V("AFK"),         None, None),
+            ("text",  T("general"),       None, None),
+            ("text",  T("hors-sujet"),    None, None),
+            ("text",  T("anniversaires"), None, None),
+            ("forum", T("partages"),      None, None, ["Memes", "Screenshots", "Clips", "Fanart", "Builds", "Autres"]),
+            ("forum", T("suggestions"),   None, None),
+            ("forum", T("sondages"),      None, None),
+            ("voice", V("General"),       None, None),
+            ("voice", V("Musique"),       None, None),
+            ("voice", V("AFK"),           None, None),
         ],
     })
 
@@ -309,11 +318,12 @@ def build_categories():
         "name": C("OPS COMMANDEMENT"),
         "private_for": LVL_SOLDAT,
         "channels": [
-            ("text",  T("plan-de-bataille"), LVL_OFFICIER, None),
-            ("text",  T("ordres"),           None, None),                 # fusion ordres-du-jour + objectifs-prioritaires
-            ("forum", T("debriefings"),      None, None),
-            ("text",  T("etat-major"),       LVL_COMMANDEMENT, None),
-            ("voice", V("Officiers"),        LVL_OFFICIER, None),
+            ("text",  T("plan-de-bataille"),       LVL_OFFICIER, None),
+            ("text",  T("ordres-du-jour"),         None, None),
+            ("text",  T("objectifs-prioritaires"), None, None),
+            ("forum", T("debriefings"),            None, None),
+            ("text",  T("etat-major"),             LVL_COMMANDEMENT, None),
+            ("voice", V("Officiers"),              LVL_OFFICIER, None),
         ],
     })
 
@@ -321,8 +331,9 @@ def build_categories():
         "name": C("OPS FRONTS"),
         "private_for": LVL_SOLDAT,
         "channels": [
-            ("text",  T("comms"), None, None),  # fusion réserve + évacuation
-            ("voice", V("QG"),    None, None),
+            ("text",  T("comms-reserve"),    None, None),
+            ("text",  T("comms-evacuation"), None, None),
+            ("voice", V("QG"),               None, None),
         ],
     })
 
@@ -330,12 +341,20 @@ def build_categories():
         "name": C("LOGISTIQUE"),
         "private_for": LVL_SOLDAT,
         "channels": [
-            ("forum", T("demandes-logi"),     None, None),
-            ("forum", T("production"),        None, None, ["BMats", "RMats", "EMats", "HEMats", "Vehicules", "Armement"]),
-            ("text",  T("convois"),           None, None),
-            ("text",  T("stockpiles"),        None, None),
-            ("text",  T("comms-logi"),        None, None),
-            ("voice", V("Coordination-Logi"), None, None),
+            ("forum", T("demandes-logi"),         None, None),
+            ("text",  T("offres-logi"),           None, None),
+            ("text",  T("production-bmats"),      None, None),
+            ("text",  T("production-rmats"),      None, None),
+            ("text",  T("production-emats"),      None, None),
+            ("text",  T("production-hemats"),     None, None),
+            ("text",  T("production-vehicules"),  None, None),
+            ("text",  T("production-armement"),   None, None),
+            ("text",  T("convois"),               None, None),
+            ("text",  T("stockpiles"),            None, None),
+            ("text",  T("ressources-brutes"),     None, None),
+            ("text",  T("train-et-rail"),         None, None),
+            ("text",  T("comms-logi"),            None, None),
+            ("voice", V("Coordination-Logi"),     None, None),
         ],
     })
 
@@ -343,8 +362,12 @@ def build_categories():
         "name": C("RENSEIGNEMENT"),
         "private_for": LVL_SOLDAT,
         "channels": [
-            ("forum", T("intel"),                 None, None, ["Cartes", "Recon", "Bases ennemies", "Convois ennemis", "Mouvements"]),
+            ("text",  T("intel-ennemi"),          None, None),
+            ("forum", T("cartes-et-fronts"),      None, None),
+            ("forum", T("rapports-recon"),        None, None),
             ("forum", T("analyses-strategiques"), LVL_OFFICIER, None),
+            ("text",  T("bases-ennemies"),        None, None),
+            ("text",  T("convois-ennemis"),       None, None),
         ],
     })
 
@@ -362,9 +385,19 @@ def build_categories():
         "name": C("FORMATION"),
         "private_for": LVL_RECRUE,
         "channels": [
-            ("forum", T("academie"),             None, None, ["Débutant", "Infanterie", "Blindés", "Artillerie", "Marine", "Logistique", "Construction", "Médic", "Snipers-Recon", "Anti-Char", "Partisan", "Bibliothèque"]),
-            ("text",  T("exercices-programmes"), None, None),
-            ("voice", V("Salle-Cours"),          None, None),
+            ("forum", T("academie-generale"),       None, None),
+            ("text",  T("guide-debutant"),          None, "readonly"),
+            ("forum", T("formation-infanterie"),    None, None),
+            ("forum", T("formation-blindes"),       None, None),
+            ("forum", T("formation-artillerie"),    None, None),
+            ("forum", T("formation-marine"),        None, None),
+            ("forum", T("formation-logi"),          None, None),
+            ("forum", T("formation-construction"),  None, None),
+            ("forum", T("formation-medic"),         None, None),
+            ("forum", T("formation-snipers"),       None, None),
+            ("text",  T("exercices-programmes"),    None, None),
+            ("forum", T("bibliotheque"),            None, None),
+            ("voice", V("Salle-Cours"),             None, None),
         ],
     })
 
@@ -372,7 +405,10 @@ def build_categories():
         "name": C("BOTS"),
         "private_for": LVL_RECRUE,
         "channels": [
-            ("text", T("outils-bot"), None, None),  # fusion : commandes + stats + classements + calculatrices
+            ("text", T("commandes-bot"),     None, None),
+            ("text", T("stats-personnelles"),None, None),
+            ("text", T("classements"),       None, None),
+            ("text", T("calculatrices"),     None, None),
         ],
     })
 
@@ -380,7 +416,10 @@ def build_categories():
         "name": C("ARCHIVES"),
         "private_for": LVL_SOLDAT,
         "channels": [
-            ("forum", T("archives"), None, None, ["Guerres", "Opérations", "Vétérans", "Mémorial"]),
+            ("forum", T("archives-guerres"),    None, None),
+            ("forum", T("archives-operations"), None, None),
+            ("text",  T("hall-des-veterans"),   None, "readonly"),
+            ("text",  T("memorial"),            None, "readonly"),
         ],
     })
 
@@ -388,7 +427,10 @@ def build_categories():
         "name": C("SUPPORT"),
         "private_for": None,
         "channels": [
-            ("forum", T("support"), None, None, ["Aide technique", "Aide Discord", "Contact staff", "Signalement"]),
+            ("text", T("aide-technique"), None, None),
+            ("text", T("aide-discord"),   None, None),
+            ("text", T("contact-staff"),  None, None),
+            ("text", T("signalements"),   None, None),
         ],
     })
 
@@ -482,15 +524,42 @@ WELCOME_MESSAGES = {
             "**Steam** — https://store.steampowered.com/app/505460/Foxhole/"
         ),
     },
-    T("choix-roles"): {
-        "title": "🎖️ Personnalise ton profil",
+    T("choix-specialite"): {
+        "title": "🎖️ Choisis ta ou tes spécialités",
         "color": 0xFBC02D,
         "description": (
-            "Ce salon contient **3 panneaux** pour te configurer :\n\n"
-            "**1️⃣ Ta spécialité** — la branche que tu intègres (Infanterie, Blindés, etc.)\n"
-            "**2️⃣ Tes disponibilités** — les créneaux où tu joues habituellement\n"
-            "**3️⃣ Tes notifications** — les types de pings que tu acceptes de recevoir\n\n"
-            "Clique sur les boutons des sections plus bas. Tu peux changer tes choix à tout moment."
+            "Clique sur les boutons ci-dessous pour rejoindre une branche du régiment "
+            "(ou la quitter, en cliquant à nouveau).\n\n"
+            "Tu commences toujours comme **Recrue [Spécialité]**. Un officier te promouvra "
+            "selon ton activité.\n\n"
+            "🪖 **Infanterie** — front, assaut, défense de tranchées\n"
+            "🚗 **Blindés** — tankistes, chasseurs de chars\n"
+            "💥 **Artillerie** — barrages, contre-batterie\n"
+            "⚓ **Marine** — navires, débarquements, ravitaillement maritime\n"
+            "🚛 **Logistique** — convois, scoop, production, stocks\n"
+            "🔨 **Builder** — bases, FOB, défenses\n"
+            "⚕️ **Médic** — soins terrain, trauma center, évac\n"
+            "🎯 **Sniper-Recon** — observation, tir longue distance\n"
+            "🚀 **Anti-Char** — spécialistes AT, hunting\n"
+            "🗡️ **Partisan** — sabotage, raids, ops spéciales"
+        ),
+    },
+    T("choix-disponibilite"): {
+        "title": "🕒 Tes disponibilités",
+        "color": 0x90A4AE,
+        "description": (
+            "Indique quand tu joues habituellement. Les officiers s'en servent "
+            "pour planifier les ops aux bons créneaux.\n\n"
+            "Tu peux en cocher plusieurs et changer quand tu veux."
+        ),
+    },
+    T("choix-notifications"): {
+        "title": "🔔 Notifications opt-in",
+        "color": 0x607D8B,
+        "description": (
+            "Choisis les pings que tu veux recevoir. Aucun n'est obligatoire — mais "
+            "ça t'évite de rater les ops importantes.\n\n"
+            "Tu peux activer/désactiver à tout moment."
         ),
     },
     T("candidatures"): {
@@ -512,204 +581,12 @@ WELCOME_MESSAGES = {
             "Un Recruteur te contactera dans les 48h pour un entretien vocal."
         ),
     },
-    T("presentations"): {
-        "title": "👤 Présente-toi",
-        "color": 0x3F51B5,
-        "description": (
-            "Ouvre un post avec ton pseudo Foxhole comme titre et raconte-nous qui tu es :\n\n"
-            "```\n"
-            "• Pseudo Foxhole :\n"
-            "• D'où viens-tu (pays/région) :\n"
-            "• Depuis quand tu joues à Foxhole :\n"
-            "• Tes spécialités préférées :\n"
-            "• Ce que tu fais dans la vie (optionnel) :\n"
-            "• Un fun fact :\n"
-            "```"
-        ),
-    },
-    T("debriefings"): {
-        "title": "📝 Format des debriefings",
-        "color": 0x795548,
-        "description": (
-            "Ouvre un post par opération. Titre : `[DATE] - [OPÉRATION/HEX]`. Template :\n\n"
-            "```\n"
-            "• Date / heure :\n"
-            "• Hex / Front :\n"
-            "• Objectif initial :\n"
-            "• Effectifs engagés :\n"
-            "• Résultat (succès/échec/partiel) :\n"
-            "• Ce qui a bien fonctionné :\n"
-            "• Ce qui a mal fonctionné :\n"
-            "• Pertes (humaines/matériel) :\n"
-            "• Leçons retenues :\n"
-            "```"
-        ),
-    },
-    T("suggestions"): {
-        "title": "💡 Format des suggestions",
-        "color": 0x009688,
-        "description": (
-            "Ouvre un post avec ta suggestion. Sois clair et concis :\n\n"
-            "```\n"
-            "• Domaine concerné (Discord / Régiment / Ops / Logi / autre) :\n"
-            "• Suggestion :\n"
-            "• Pourquoi (quel problème ça résout) :\n"
-            "• Idées d'implémentation (si applicable) :\n"
-            "```\n\n"
-            "Les membres peuvent voter en réaction. Les officiers traiteront les suggestions actives."
-        ),
-    },
-    T("demandes-logi"): {
-        "title": "🚛 Format des demandes logi",
-        "color": 0xF57F17,
-        "description": (
-            "Ouvre un post par demande. Titre : `[URGENCE] [HEX] [TYPE]`. Template :\n\n"
-            "```\n"
-            "• Quoi (matériel précis + quantité) :\n"
-            "• Où (hex de destination, stockpile/base) :\n"
-            "• Quand (urgent / sous 24h / pas pressé) :\n"
-            "• Pourquoi (front actif / réserve / production) :\n"
-            "• Code base (si privé) :\n"
-            "• Qui livre / qui réceptionne :\n"
-            "```\n\n"
-            "Cocher comme **résolu** une fois la demande livrée."
-        ),
-    },
-    T("analyses-strategiques"): {
-        "title": "🧠 Format des analyses stratégiques",
-        "color": 0x880E4F,
-        "description": (
-            "**Salon réservé aux Officiers.** Pour les analyses approfondies du conflit en cours :\n\n"
-            "```\n"
-            "• Sujet de l'analyse :\n"
-            "• Front / hex concerné :\n"
-            "• Situation actuelle (côtés Wardens et Colonials) :\n"
-            "• Hypothèses sur l'intention adverse :\n"
-            "• Options stratégiques pour notre camp :\n"
-            "• Recommandation :\n"
-            "• Risques / contre-indications :\n"
-            "```"
-        ),
-    },
 }
 
 
 # ════════════════════════════════════════════════════════════════════
-#  POSTS DE DÉMARRAGE — Forum 『』partages
+#  VUES PERSISTANTES — Boutons de rôle
 # ════════════════════════════════════════════════════════════════════
-# Un post par tag, créé et épinglé automatiquement par /create.
-PARTAGES_STARTER_POSTS = [
-    # (tag, titre, description, couleur)
-    ("Memes",       "🤣 Memes Foxhole",
-     "Postez ici vos memes liés à Foxhole, à la communauté, aux situations "
-     "absurdes en jeu, aux mèmes recyclés de la guerre actuelle...\n\n"
-     "**Règles :** rien de raciste, sexiste ou discriminatoire. Le reste passe.",
-     0xFFB300),
-    ("Screenshots", "📸 Captures d'écran",
-     "Vos plus belles captures du jeu : combats, paysages, scènes épiques, "
-     "kill confirmés, moments dramatiques...\n\n"
-     "Si possible, précise le hex et le contexte dans ton post.",
-     0x42A5F5),
-    ("Clips",       "🎬 Clips & vidéos",
-     "Vos meilleurs moments en vidéo : actions, fails, exploits, "
-     "compilations de kills, ambush épiques...\n\n"
-     "Formats acceptés : liens YouTube, Twitch, Medal, ou upload Discord direct (≤ 25 Mo).",
-     0xE91E63),
-    ("Fanart",      "🎨 Créations artistiques",
-     "Vos dessins, montages, créations 3D, peintures, sculptures... "
-     "Tout ce qui touche à l'univers Foxhole de près ou de loin.\n\n"
-     "Crédite les artistes si tu partages le travail de quelqu'un d'autre.",
-     0xAB47BC),
-    ("Builds",      "🏗️ Bases & constructions",
-     "Présente tes bases, FOB, bunkers, défenses, fortifications, "
-     "bases logi, hospices, dépôts...\n\n"
-     "**Bonus** si tu mets une carte annotée du build ou un guide de construction.",
-     0x6D4C41),
-    ("Autres",      "📦 Autres partages",
-     "Catégorie fourre-tout pour ce qui ne rentre pas dans les autres tags : "
-     "anecdotes, histoires de guerre, partages liés au jeu mais hors-format.",
-     0x90A4AE),
-]
-
-# ════════════════════════════════════════════════════════════════════
-#  POSTS DE DÉMARRAGE — Forum production (LOGISTIQUE)
-# ════════════════════════════════════════════════════════════════════
-PRODUCTION_STARTER_POSTS = [
-    ("BMats",     "🟫 Production BMats",     "Coordination de la production des matériaux de base (Basic Materials). Postez ici les besoins en BMats, les fonderies actives, et les volumes produits.", 0x6D4C41),
-    ("RMats",     "🟧 Production RMats",     "Coordination du raffinage en Refined Materials. Notez les usines actives et les stocks disponibles.", 0xD35400),
-    ("EMats",     "💥 Production EMats",     "Coordination de la production d'Explosive Materials. Critique pour la munition AT et l'artillerie.", 0xC0392B),
-    ("HEMats",    "🚀 Production HEMats",    "Coordination de la production d'Heavy Explosive Materials. Indispensable pour les rockets, mortiers lourds, ATGM.", 0xE74C3C),
-    ("Vehicules", "🚗 Production véhicules", "Coordination de la production de véhicules : tankers, half-tracks, camions logi, navires.", 0x34495E),
-    ("Armement",  "🔫 Production armement",  "Coordination de la production d'armes individuelles et munitions : fusils, mortiers, MG, AT léger.", 0x7F8C8D),
-]
-
-
-# ════════════════════════════════════════════════════════════════════
-#  POSTS DE DÉMARRAGE — Forum academie (FORMATION)
-# ════════════════════════════════════════════════════════════════════
-ACADEMIE_STARTER_POSTS = [
-    ("Débutant",      "🎓 Guide du débutant",        "Les bases du jeu pour les nouvelles recrues : interface, mouvement, premier équipement, premiers réflexes. **Si tu débutes, lis d'abord ce post avant tout le reste.**", 0x4CAF50),
-    ("Infanterie",    "🪖 Formation Infanterie",     "Tactiques d'infanterie, choix d'armement, mouvement en équipe, défense de tranchées, assaut.", 0x7F8C8D),
-    ("Blindés",       "🚗 Formation Blindés",        "Opération de char : conduite, tir, communication équipage. Doctrine d'engagement, points faibles ennemis.", 0x37474F),
-    ("Artillerie",    "💥 Formation Artillerie",     "Calculs de tir, doctrine, contre-batterie, observation, coordination avec spotter.", 0xBF360C),
-    ("Marine",        "⚓ Formation Marine",         "Navigation, opération de navires, débarquements, ravitaillement maritime.", 0x01579B),
-    ("Logistique",    "🚛 Formation Logistique",     "Chaînes de production, convois, scoop, stockage, codes bases.", 0xF57F17),
-    ("Construction",  "🔨 Formation Construction",   "Bunkers, FOB, défenses, garnisons, lignes de tranchées.", 0x4E342E),
-    ("Médic",         "⚕️ Formation Médic",          "Soins de combat, évacuation, trauma center, gestion de blessés.", 0x00695C),
-    ("Snipers-Recon", "🎯 Formation Snipers / Recon","Observation longue distance, tir précis, infiltration, rapport recon.", 0x33691E),
-    ("Anti-Char",     "🚀 Formation Anti-Char",      "Tactiques AT : RPG, mines, satchel, chasseurs de chars.", 0x4A148C),
-    ("Partisan",      "🗡️ Formation Partisan",       "Guerre asymétrique : sabotage, raids, opérations derrière les lignes.", 0x263238),
-    ("Bibliothèque",  "📚 Bibliothèque",             "Documents, guides PDF, fiches techniques, manuels écrits.", 0x607D8B),
-]
-
-
-# ════════════════════════════════════════════════════════════════════
-#  POSTS DE DÉMARRAGE — Forum intel (RENSEIGNEMENT)
-# ════════════════════════════════════════════════════════════════════
-INTEL_STARTER_POSTS = [
-    ("Cartes",          "🗺️ Cartes et fronts",             "Captures de cartes annotées, hex contrôlés, situations stratégiques. Précise toujours le hex et l'heure de la capture.", 0x2196F3),
-    ("Recon",           "🕵️ Rapports de reconnaissance",   "Observations terrain, repérages d'éclaireurs, points d'intérêt.", 0x4CAF50),
-    ("Bases ennemies",  "🏰 Bases ennemies localisées",    "Forteresses adverses, FOB ennemis, dépôts repérés.", 0xE91E63),
-    ("Convois ennemis", "🚛 Convois ennemis signalés",     "Mouvements de logi adverse, itinéraires, fréquences observées.", 0xFFB300),
-    ("Mouvements",      "👣 Mouvements de troupes",        "Déplacements observés, concentrations, ruptures de front.", 0x9C27B0),
-]
-
-
-# ════════════════════════════════════════════════════════════════════
-#  POSTS DE DÉMARRAGE — Forum archives (ARCHIVES)
-# ════════════════════════════════════════════════════════════════════
-ARCHIVES_STARTER_POSTS = [
-    ("Guerres",    "🏆 Archives des guerres",    "Résultats des WARs passées, bilans, statistiques.", 0xFFD700),
-    ("Opérations", "📜 Archives des opérations", "Débriefings anciens, post-mortems, leçons retenues.", 0x9C27B0),
-    ("Vétérans",   "🎖️ Hall des vétérans",       "Membres historiques du régiment, ceux qui ont laissé leur marque.", 0xFFC107),
-    ("Mémorial",   "🕯️ Mémorial",                "Hommages aux anciens combattants partis.", 0x607D8B),
-]
-
-
-# ════════════════════════════════════════════════════════════════════
-#  POSTS DE DÉMARRAGE — Forum support (SUPPORT)
-# ════════════════════════════════════════════════════════════════════
-SUPPORT_STARTER_POSTS = [
-    ("Aide technique", "🔧 Aide technique Foxhole", "Bugs en jeu, problèmes de performance, crashs, glitches. Décris ton problème, ta config, ce que tu as déjà essayé.", 0xFF5722),
-    ("Aide Discord",   "💬 Aide Discord",           "Problèmes avec le serveur Discord, accès, notifications, permissions.", 0x2196F3),
-    ("Contact staff",  "📞 Contact staff",          "Pour parler avec un membre de l'État-Major (sujet général). Pour un signalement, utilise le tag « Signalement ».", 0x4CAF50),
-    ("Signalement",    "⚠️ Signalement",            "Signaler un comportement problématique, un conflit, une violation du règlement. **Ton post sera traité confidentiellement par les officiers.**", 0xE91E63),
-]
-
-
-# ════════════════════════════════════════════════════════════════════
-#  MAP des seeds par forum
-# ════════════════════════════════════════════════════════════════════
-FORUM_STARTERS = {
-    T("partages"):   PARTAGES_STARTER_POSTS,
-    T("production"): PRODUCTION_STARTER_POSTS,
-    T("academie"):   ACADEMIE_STARTER_POSTS,
-    T("intel"):      INTEL_STARTER_POSTS,
-    T("archives"):   ARCHIVES_STARTER_POSTS,
-    T("support"):    SUPPORT_STARTER_POSTS,
-}
-
-
 class ToggleRoleButton(discord.ui.Button):
     """Bouton générique pour toggle (ajouter/retirer) un rôle."""
     def __init__(self, role_name: str, emoji: str, custom_id_prefix: str, style=discord.ButtonStyle.secondary):
@@ -1019,74 +896,44 @@ async def _send_welcome_messages(channels, log):
         except Exception as e:
             log.append(f"✗ Message {ch_name} : {e}")
 
-    # Boutons : tous dans choix-roles (3 panneaux dans le même salon)
-    roles_ch = channels.get(T("choix-roles"))
-    if roles_ch:
+    # Boutons de spécialité
+    spec_ch = channels.get(T("choix-specialite"))
+    if spec_ch:
         try:
-            await roles_ch.send(
+            await spec_ch.send(
                 "**🎖️ Sélectionne ta ou tes spécialités :**\n"
-                "*Tu peux en cocher plusieurs. Tu commences toujours en Recrue.*\n"
-                "🪖 Infanterie · 🚗 Blindés · 💥 Artillerie · ⚓ Marine · 🚛 Logistique · "
-                "🔨 Builder · ⚕️ Médic · 🎯 Sniper-Recon · 🚀 Anti-Char · 🗡️ Partisan",
+                "*Tu peux en cocher plusieurs. Tu commences toujours en Recrue.*",
                 view=SpecialtyView(),
             )
             log.append("🎛️ Boutons spécialités installés.")
         except Exception as e:
             log.append(f"✗ Boutons spécialités : {e}")
 
+    # Boutons disponibilités
+    avail_ch = channels.get(T("choix-disponibilite"))
+    if avail_ch:
         try:
-            await roles_ch.send(
-                "\n**🕒 Quand est-ce que tu joues d'habitude ?**\n"
-                "*Coche toutes les cases qui s'appliquent. Sert aux officiers à planifier les ops.*",
+            await avail_ch.send(
+                "**🕒 Quand est-ce que tu joues d'habitude ?**\n"
+                "*Coche toutes les cases qui s'appliquent.*",
                 view=AvailabilityView(),
             )
             log.append("🎛️ Boutons disponibilités installés.")
         except Exception as e:
             log.append(f"✗ Boutons dispos : {e}")
 
+    # Boutons notifications
+    notif_ch = channels.get(T("choix-notifications"))
+    if notif_ch:
         try:
-            await roles_ch.send(
-                "\n**🔔 Quels pings veux-tu recevoir ?**\n"
-                "*Activé = tu seras notifié quand le rôle est ping. Aucun n'est obligatoire.*",
+            await notif_ch.send(
+                "**🔔 Quels pings veux-tu recevoir ?**\n"
+                "*Activé = tu seras notifié quand le rôle est ping.*",
                 view=NotificationView(),
             )
             log.append("🎛️ Boutons notifications installés.")
         except Exception as e:
             log.append(f"✗ Boutons notifs : {e}")
-
-
-# ════════════════════════════════════════════════════════════════════
-#  SEED — Posts initiaux dans le forum 『』partages
-# ════════════════════════════════════════════════════════════════════
-async def _seed_forums(channels, log):
-    """Crée un post épinglé par tag dans chacun des forums seedés."""
-    for forum_name, posts in FORUM_STARTERS.items():
-        forum = channels.get(forum_name)
-        if not forum or not isinstance(forum, discord.ForumChannel):
-            log.append(f"⚠️ Forum '{forum_name}' introuvable, seed sauté.")
-            continue
-        tags_by_name = {tag.name: tag for tag in forum.available_tags}
-        log.append(f"📌 Seed → {forum_name}")
-        for tag_name, title, description, color in posts:
-            tag = tags_by_name.get(tag_name)
-            if not tag:
-                log.append(f"   ⚠️ Tag '{tag_name}' absent.")
-                continue
-            try:
-                embed = discord.Embed(title=title, description=description, color=color)
-                embed.set_footer(text="404e RI — Post d'introduction")
-                thread, _msg = await forum.create_thread(
-                    name=title[:100],
-                    embed=embed,
-                    applied_tags=[tag],
-                )
-                try:
-                    await thread.edit(pinned=True)
-                except Exception:
-                    pass
-                log.append(f"   ✓ {tag_name}")
-            except Exception as e:
-                log.append(f"   ✗ {tag_name} : {e}")
 
 
 # ════════════════════════════════════════════════════════════════════
@@ -1253,9 +1100,6 @@ async def create_cmd(interaction: discord.Interaction):
 
     log.append("\n**=== ÉTAPE 5 — Messages et boutons ===**")
     await _send_welcome_messages(channels, log)
-
-    log.append("\n**=== ÉTAPE 6 — Seed des forums (partages, production, academie, intel, archives, support) ===**")
-    await _seed_forums(channels, log)
 
     log.append(
         f"\n✅ **Terminé** — {len(roles)} rôles, {len(CATEGORIES)} catégories, {len(channels)} salons."
