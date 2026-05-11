@@ -13,6 +13,7 @@ Variables d'environnement requises :
 
 import os
 import asyncio
+import time
 import discord
 from discord import app_commands
 from discord.ext import commands
@@ -1349,10 +1350,29 @@ async def on_member_update(before: discord.Member, after: discord.Member):
 # ════════════════════════════════════════════════════════════════════
 #  COMMANDE /create
 # ════════════════════════════════════════════════════════════════════
+# Cooldown rate-limit Discord (par guild_id → timestamp unix de fin de cooldown)
+# Évite de prolonger la pénalité Discord en relançant /create trop tôt.
+_CREATE_COOLDOWN = {}
+
+
 @bot.tree.command(name="create", description="Crée toute la structure du serveur (rôles + salons + paramètres).")
 async def create_cmd(interaction: discord.Interaction):
     if not interaction.user.guild_permissions.administrator:
         await interaction.response.send_message("❌ Administrateurs seulement.", ephemeral=True)
+        return
+
+    # Vérifier le cooldown rate-limit
+    now = time.time()
+    cooldown_end = _CREATE_COOLDOWN.get(interaction.guild.id, 0)
+    if now < cooldown_end:
+        wait = int(cooldown_end - now)
+        await interaction.response.send_message(
+            f"⏰ **Cooldown rate-limit Discord actif.**\n\n"
+            f"Le bot a été rate-limited par Discord lors d'un précédent `/create`. "
+            f"Attends encore **{wait} secondes** (~{wait // 60 + 1} min) avant de relancer.\n\n"
+            f"⚠️ **Chaque tentative pendant le cooldown allonge le délai Discord.** Sois patient.",
+            ephemeral=True,
+        )
         return
 
     await interaction.response.defer(thinking=True)
@@ -1396,14 +1416,20 @@ async def create_cmd(interaction: discord.Interaction):
         await _send_long(interaction, "\n".join(log))
 
     except discord.RateLimited as e:
-        # Discord nous bloque temporairement — on arrête proprement
+        # Enregistrer le cooldown + un buffer de 30s pour être large
+        _CREATE_COOLDOWN[guild.id] = time.time() + e.retry_after + 30
         log.append("")
         log.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
         log.append(f"🛑 **RATE LIMIT DISCORD — Arrêt à mi-parcours**")
         log.append(f"")
-        log.append(f"Discord limite la création de rôles/salons à ~50 / 10 minutes.")
-        log.append(f"⏰ Attends **{int(e.retry_after / 60) + 1} minute(s)** puis relance `/create`.")
-        log.append(f"Le bot **reprendra là où il s'est arrêté** (les rôles/salons déjà créés ne sont pas recréés).")
+        log.append(f"Discord limite la création de rôles/salons.")
+        log.append(f"⏰ **Cooldown actif : {int(e.retry_after) + 30} secondes** (~{int(e.retry_after / 60) + 1} min)")
+        log.append(f"")
+        log.append(f"🔒 Le bot va REFUSER de relancer `/create` pendant ce délai pour ne pas")
+        log.append(f"   prolonger la pénalité Discord. **NE clique PAS sur /create** entre-temps.")
+        log.append(f"")
+        log.append(f"Quand le cooldown expire, relance `/create` UNE seule fois.")
+        log.append(f"Le bot reprendra où il s'est arrêté (idempotent).")
         await _send_long(interaction, "\n".join(log))
     except Exception as e:
         log.append(f"\n💥 **ERREUR FATALE** : {type(e).__name__}: {e}")
