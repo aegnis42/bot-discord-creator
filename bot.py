@@ -1439,6 +1439,132 @@ async def create_cmd(interaction: discord.Interaction):
 
 
 # ════════════════════════════════════════════════════════════════════
+#  COMMANDE /setup_channels — crée tout SAUF les rôles
+# ════════════════════════════════════════════════════════════════════
+# À utiliser quand les rôles ont été créés à la main pour éviter le
+# rate-limit Discord sur la création de rôles (le plus restrictif).
+@bot.tree.command(
+    name="setup_channels",
+    description="Crée salons + messages + posts (les rôles doivent exister déjà).",
+)
+async def setup_channels_cmd(interaction: discord.Interaction):
+    if not interaction.user.guild_permissions.administrator:
+        await interaction.response.send_message("❌ Administrateurs seulement.", ephemeral=True)
+        return
+
+    # Cooldown partagé avec /create (même bucket Discord pour les salons)
+    now = time.time()
+    cooldown_end = _CREATE_COOLDOWN.get(interaction.guild.id, 0)
+    if now < cooldown_end:
+        wait = int(cooldown_end - now)
+        await interaction.response.send_message(
+            f"⏰ Cooldown rate-limit actif. Attends encore **{wait}s** (~{wait // 60 + 1} min).",
+            ephemeral=True,
+        )
+        return
+
+    await interaction.response.defer(thinking=True)
+    log = []
+    guild = interaction.guild
+
+    async def progress(msg):
+        try:
+            await interaction.followup.send(msg, ephemeral=True)
+        except Exception:
+            pass
+
+    # Récupère les rôles existants par nom
+    roles = {r.name: r for r in guild.roles}
+
+    # Diagnostic des rôles : prévient si certains essentiels manquent
+    log.append("**=== DIAGNOSTIC DES RÔLES EXISTANTS ===**")
+    expected_critical = [
+        "Général", "Colonel", "Commandant",
+        "Officier Infanterie", "Infanterie", "Recrue Infanterie",
+        "Réserviste", "Visiteur", "Allié",
+        "Recruteur",
+    ]
+    missing = [n for n in expected_critical if n not in roles]
+    if missing:
+        log.append(f"⚠️ **{len(missing)} rôle(s) attendu(s) MANQUANT(S)** :")
+        for n in missing:
+            log.append(f"   - `{n}`")
+        log.append("Les permissions pour ces rôles seront simplement ignorées (les salons existeront quand même).")
+    else:
+        log.append(f"✓ Rôles critiques détectés ({len(roles)} rôles totaux sur le serveur).")
+
+    try:
+        log.append("\n**=== ÉTAPE 1 — Mode Communauté ===**")
+        temp_pair = await _ensure_community(guild, log)
+        await progress("⏳ Mode Communauté OK. Création des salons…")
+
+        log.append("\n**=== ÉTAPE 2 — Salons ===**")
+        channels = await _create_channels(guild, roles, log, progress_cb=progress)
+        await progress(f"✓ {len(channels)} salons prêts. Configuration finale…")
+
+        log.append("\n**=== ÉTAPE 3 — Paramètres serveur ===**")
+        await _finalize_server_config(guild, channels, temp_pair, log)
+
+        log.append("\n**=== ÉTAPE 4 — Messages et boutons ===**")
+        await _send_welcome_messages(channels, log)
+        await progress("⏳ Seed des forums (posts d'intro)…")
+
+        log.append("\n**=== ÉTAPE 5 — Seed des forums ===**")
+        await _seed_forums(channels, log)
+
+        log.append(f"\n✅ **Terminé** — {len(CATEGORIES)} catégories, {len(channels)} salons.")
+        await _send_long(interaction, "\n".join(log))
+
+    except discord.RateLimited as e:
+        _CREATE_COOLDOWN[guild.id] = time.time() + e.retry_after + 30
+        log.append("")
+        log.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+        log.append(f"🛑 **RATE LIMIT DISCORD**")
+        log.append(f"⏰ Cooldown actif : {int(e.retry_after) + 30}s (~{int(e.retry_after / 60) + 1} min)")
+        log.append(f"🔒 Le bot bloque les prochaines tentatives jusqu'à expiration.")
+        log.append(f"Relance `/setup_channels` quand le cooldown est passé.")
+        await _send_long(interaction, "\n".join(log))
+    except Exception as e:
+        log.append(f"\n💥 **ERREUR FATALE** : {type(e).__name__}: {e}")
+        import traceback
+        log.append(f"```\n{traceback.format_exc()[:1500]}\n```")
+        await _send_long(interaction, "\n".join(log))
+
+
+# ════════════════════════════════════════════════════════════════════
+#  COMMANDE /list_expected_roles — liste les noms exacts attendus
+# ════════════════════════════════════════════════════════════════════
+@bot.tree.command(
+    name="list_expected_roles",
+    description="Affiche la liste des rôles attendus par le bot (pour création manuelle).",
+)
+async def list_expected_roles_cmd(interaction: discord.Interaction):
+    if not interaction.user.guild_permissions.administrator:
+        await interaction.response.send_message("❌ Administrateurs seulement.", ephemeral=True)
+        return
+
+    await interaction.response.defer(thinking=True, ephemeral=True)
+    existing = {r.name for r in interaction.guild.roles}
+
+    lines = ["**📋 Rôles attendus par le bot**", ""]
+    lines.append("✅ = ce rôle existe déjà · ❌ = manquant")
+    lines.append("")
+
+    missing_total = 0
+    for name, _color, _perms, is_sep, hoist in ROLES:
+        status = "✅" if name in existing else "❌"
+        if name not in existing:
+            missing_total += 1
+        marker = "📌" if hoist else ("➖" if is_sep else "  ")
+        lines.append(f"{status} {marker} `{name}`")
+
+    lines.append("")
+    lines.append(f"**Total** : {len(ROLES)} rôles attendus, {missing_total} manquant(s).")
+
+    await _send_long(interaction, "\n".join(lines), ephemeral=True)
+
+
+# ════════════════════════════════════════════════════════════════════
 #  COMMANDE /delete
 # ════════════════════════════════════════════════════════════════════
 @bot.tree.command(name="delete", description="⚠️ Supprime TOUS les salons et rôles du serveur.")
